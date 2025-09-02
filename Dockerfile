@@ -6,26 +6,24 @@ WORKDIR /app
 ENV NPM_CONFIG_LEGACY_PEER_DEPS=true \
     NPM_CONFIG_UPDATE_NOTIFIER=false
 
-######## deps ########
+######## deps (install with workspaces) ########
 FROM base AS deps
-# Copy local packages first so file: deps resolve during install
-COPY packages ./packages
-# Copy backend manifest
+# Copy manifests BEFORE install so workspaces link
+COPY package.json ./
 COPY apps/backend/package.json ./apps/backend/package.json
-# Install backend deps (will link local packages via file:)
-WORKDIR /app/apps/backend
+COPY packages ./packages
+# Install (skip scripts here if you want, we’ll build explicitly)
 RUN npm install --ignore-scripts
 
 ######## build ########
 FROM base AS build
-# Bring installed deps + manifests
+# Reuse installed deps/manifests
 COPY --from=deps /app /app
-# Copy the rest of the source (ts, configs, etc.)
+# Bring the rest of the source (ts configs, code, etc.)
 COPY . .
-# Build local packages if they declare build scripts (optional but recommended)
-# (requires a root package.json with "workspaces": ["apps/*","packages/*"])
+# Build all workspaces that declare a build script -> creates packages/*/dist
 RUN npm run build -ws --if-present || true
-# Build the backend (creates .medusa/)
+# Build backend (.medusa/)
 WORKDIR /app/apps/backend
 RUN npm run build || echo "No build script; continuing"
 
@@ -33,10 +31,10 @@ RUN npm run build || echo "No build script; continuing"
 FROM node:20-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app/apps/backend
-# Copy built project
+# Copy built monorepo
 COPY --from=build /app /app
-# Ensure public assets symlink exists
+# Ensure public assets symlink
 RUN ln -sfn .medusa/server/public public || true
 EXPOSE 3000
-# Migrate on boot, then start server directly (avoids CLI wrapper issues)
+# Migrate then start compiled server directly (avoids CLI wrapper traps)
 CMD ["sh","-lc","npx -y @medusajs/cli@2.8.6 db:migrate && node .medusa/server/index.js"]
