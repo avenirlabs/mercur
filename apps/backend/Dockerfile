@@ -10,6 +10,7 @@ WORKDIR /app/apps/backend
 
 # Install only from backend package.json to get node_modules cached
 COPY apps/backend/package.json ./
+COPY apps/backend/shims ./shims
 RUN npm install --ignore-scripts
 
 ########################
