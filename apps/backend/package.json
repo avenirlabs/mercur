@@ -47,7 +47,7 @@
     "@mercurjs/algolia": "file:./shims/mercurjs-algolia",
     "@mercurjs/attribute": "file:./shims/mercurjs-attribute",
     "medusa-plugin-algolia": "^1.10.0",
-    "algoliasearch": "^5"
+    "algoliasearch": "^5",
     "@mercurjs/resend": "*",
     "@mercurjs/stripe-tax-provider": "*",
     "@mercurjs/payment-stripe-connect": "*",
