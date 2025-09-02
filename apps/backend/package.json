@@ -46,7 +46,7 @@
     "@mercurjs/split-order-payment": "*",
     "@mercurjs/taxcode": "*",
     "algoliasearch": "^5",
-    "medusa-plugin-algolia": "^1.10.0"
+    "medusa-plugin-algolia": "^1.10.0",
     "@mercurjs/resend": "*",
     "@mercurjs/stripe-tax-provider": "*",
     "@mercurjs/payment-stripe-connect": "*",
