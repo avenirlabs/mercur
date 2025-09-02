@@ -6,9 +6,9 @@
         "^build"
       ],
       "outputs": [
-        "dist/**"
+        "dist/**", ".medusa/**"
       ]
-    },
+    },  "start": {},
     "dev": {
       "cache": false,
       "persistent": true
