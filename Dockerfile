@@ -1,57 +1,54 @@
 # syntax=docker/dockerfile:1
 
 ########################
-# 1) deps: install node_modules
+# 1) Install deps (no lockfile)
 ########################
 FROM node:20-alpine AS deps
 WORKDIR /app/apps/backend
-
-# If you need native builds (sharp/bcrypt/etc.), uncomment:
+# If you have native deps (sharp/bcrypt/etc.), uncomment:
 # RUN apk add --no-cache python3 make g++ libc6-compat
 
-# Copy npm config for GitHub Packages auth (uses NPM_TOKEN env from Railway)
-# Place a .npmrc in your repo root with the lines shown below.
-COPY .npmrc /app/.npmrc
-ENV NPM_CONFIG_USERCONFIG=/app/.npmrc
-
-# Copy only manifest for faster layer caching
+# Install only from backend package.json to get node_modules cached
 COPY apps/backend/package.json ./
-
-# Install deps without running postinstall yet
 RUN npm install --ignore-scripts
 
 ########################
-# 2) build: compile app
+# 2) Build backend
 ########################
 FROM node:20-alpine AS build
 WORKDIR /app
 
-# Bring installed deps
+# Reuse installed deps
 COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
 
-# Copy the rest of your source code
+# Bring full source
 COPY . .
 
 WORKDIR /app/apps/backend
-# If you use codegen/Prisma, do it now (uncomment as needed):
+# If you use codegen/Prisma, run it here (after sources exist):
 # RUN npx prisma generate
 
-# Build (won’t fail pipeline if there’s no build script)
+# Build Medusa app (won’t fail if no build script)
+# Your package.json already has: "build": "medusa build && ln -s .medusa/server/public/ public"
 RUN npm run build || echo "No build script; continuing"
 
 ########################
-# 3) runner: minimal runtime image
+# 3) Runtime image
 ########################
 FROM node:20-alpine AS runner
 WORKDIR /app/apps/backend
 ENV NODE_ENV=production
 
-# Copy runtime deps and built code
+# Copy runtime deps and built artifacts
 COPY --from=build /app/apps/backend/node_modules ./node_modules
-COPY --from=build /app/apps/backend/dist ./dist
+# Medusa v2 builds to .medusa; keep it
+COPY --from=build /app/apps/backend/.medusa ./.medusa
 
-# Expose (Railway injects PORT; your app must use process.env.PORT)
+# Ensure public assets path exists (symlink to built public)
+RUN ln -sfn .medusa/server/public public || true
+
+# Railway injects PORT; Medusa binds to it via `medusa start`
 EXPOSE 3000
 
-# If your entry isn’t dist/server.js, change this or use npm start
-CMD ["npm","run","start"]
+# Start via your script: "start": "medusa start --types=false"
+CMD ["npm", "run", "start"]
