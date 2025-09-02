@@ -42,9 +42,15 @@ module.exports = defineConfig({
     },
     {
       resolve: '@mercurjs/algolia',
-      options: {
-        apiKey: process.env.ALGOLIA_API_KEY,
-        appId: process.env.ALGOLIA_APP_ID
+     const ALGOLIA_APP_ID = process.env.ALGOLIA_APP_ID || process.env.ALGOLIA_APPLICATION_ID;
+const ALGOLIA_ADMIN_KEY = process.env.ALGOLIA_API_KEY || process.env.ALGOLIA_ADMIN_API_KEY;
+
+if (ALGOLIA_APP_ID && ALGOLIA_ADMIN_KEY) {
+  plugins.push({
+    resolve: "medusa-plugin-algolia", // or your alias
+    options: {
+      appId: ALGOLIA_APP_ID,
+      apiKey: ALGOLIA_ADMIN_KEY
       }
     },
     {
