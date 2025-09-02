@@ -34,7 +34,7 @@
     "@mercurjs/framework": "file:./shims/mercurjs-framework",
     "@mercurjs/configuration": "file:./shims/mercurjs-configuration",
     "@mercurjs/marketplace": "file:./shims/mercurjs-marketplace",
-    "@mercurjs/seller": "file:./shims/mercurjs-seller",
+    "@mercurjs/seller": "workspace:*",
     "@mercurjs/reviews": "file:./shims/mercurjs-seller",
     "@mercurjs/payout": "file:./shims/mercurjs-payout",
     "@mercurjs/brand": "file:./shims/mercurjs-brand",
