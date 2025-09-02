@@ -37,7 +37,7 @@
     "@mercurjs/seller": "*",
     "@mercurjs/reviews": "*",
     "@mercurjs/payout": "*",
-    "@mercurjs/brand": "*",
+    "@mercurjs/brand": "file:./shims/mercurjs-brand",
     "@mercurjs/commission": "*",
     "@mercurjs/wishlist": "*",
     "@mercurjs/order-return-request": "*",
