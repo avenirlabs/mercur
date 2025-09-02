@@ -22,5 +22,7 @@
     "lint": "turbo run lint",
     "codegen": "cd .",
     "generate:oas": "turbo run generate:oas"
-  }
+  },
+   "engines": { "node": ">=20" },
+  "overrides": { "zod": "^3.25.7" }
 }
