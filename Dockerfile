@@ -1,49 +1,53 @@
 # syntax=docker/dockerfile:1
 
-######## 1) deps ########
-FROM node:20-alpine AS deps
+######## base ########
+FROM node:20-alpine AS base
+WORKDIR /app
 ENV NPM_CONFIG_LEGACY_PEER_DEPS=true NPM_CONFIG_UPDATE_NOTIFIER=false
-# If you use native modules (sharp/bcrypt/etc.), uncomment:
-# RUN apk add --no-cache python3 make g++ libc6-compat
 
-WORKDIR /app/apps/backend
-# Install only from backend manifest so we cache node_modules
-COPY apps/backend/package.json ./
+######## deps (install from root, with workspaces) ########
+FROM base AS deps
+# Copy only manifests for better caching
+COPY package.json ./
+COPY apps/backend/package.json ./apps/backend/package.json
+# Copy all workspace package manifests
+COPY packages ./packages
+# Keep only package.json files for now (optional optimization)
+# RUN find packages -type f ! -name package.json -delete
+
+# Install workspace deps at the root (links workspaces)
 RUN npm install --ignore-scripts
 
-######## 2) build ########
-FROM node:20-alpine AS build
-WORKDIR /app
+######## build ########
+FROM base AS build
+# Bring installed deps
+COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/package.json ./
+COPY --from=deps /app/apps/backend/package.json ./apps/backend/package.json
+COPY --from=deps /app/packages ./packages
 
-# Reuse installed deps
-COPY --from=deps /app/apps/backend/node_modules ./apps/backend/node_modules
-
-# Bring full source
+# Copy the full source
 COPY . .
 
-WORKDIR /app/apps/backend
-# If you use codegen/Prisma, do it here (after sources exist):
-# RUN npx prisma generate
+# (optional) build all workspaces that have a build script
+RUN npm run build -ws --if-present
 
-# Build Medusa app (your scripts handle this). Won't fail if no build script.
+# Build the backend (your script runs Medusa build)
+WORKDIR /app/apps/backend
 RUN npm run build || echo "No build script; continuing"
 
-######## 3) runner ########
+######## runner ########
 FROM node:20-alpine AS runner
 ENV NODE_ENV=production
 WORKDIR /app/apps/backend
 
-# Copy the WHOLE backend folder so package.json, configs, and .medusa exist
-COPY --from=build /app/apps/backend ./ 
+# Copy built monorepo (you can slim this if you want)
+COPY --from=build /app ./
 
-# Ensure public assets symlink points to built output (idempotent)
+# Medusa assets symlink (idempotent)
 RUN ln -sfn .medusa/server/public public || true
 
-# Optional: slim image (remove devDependencies)
-# RUN npm prune --omit=dev
-
-# Railway injects PORT; Medusa binds to it automatically via "medusa start"
 EXPOSE 3000
 
-# Start as defined in your package.json ("start": "medusa start --types=false")
-CMD ["npm", "run", "start"]
+# Migrate then start (safer) — or swap back to `npm run start`
+CMD ["sh","-lc","npx -y @medusajs/cli@2.8.6 db:migrate && node .medusa/server/index.js"]
