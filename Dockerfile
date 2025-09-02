@@ -2,6 +2,7 @@
 
 ######## 1) deps ########
 FROM node:20-alpine AS deps
+ENV NPM_CONFIG_LEGACY_PEER_DEPS=true NPM_CONFIG_UPDATE_NOTIFIER=false
 # If you use native modules (sharp/bcrypt/etc.), uncomment:
 # RUN apk add --no-cache python3 make g++ libc6-compat
 
