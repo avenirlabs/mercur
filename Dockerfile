@@ -1,3 +1,5 @@
+COPY .npmrc /app/.npmrc
+ENV NPM_CONFIG_USERCONFIG=/app/.npmrc
 # syntax=docker/dockerfile:1
 
 ########################
