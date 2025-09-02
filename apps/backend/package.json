@@ -35,7 +35,7 @@
     "@mercurjs/configuration": "file:./shims/mercurjs-configuration",
     "@mercurjs/marketplace": "file:./shims/mercurjs-marketplace",
     "@mercurjs/seller": "workspace:*",
-    "@mercurjs/reviews": "file:./shims/mercurjs-seller",
+    "@mercurjs/reviews": "workspace:*r",
     "@mercurjs/payout": "file:./shims/mercurjs-payout",
     "@mercurjs/brand": "file:./shims/mercurjs-brand",
     "@mercurjs/commission": "file:./shims/mercurjs-commission",
